@@ -1,4 +1,5 @@
-import {Button, Knob, Slider, Joystick, Motor, Distance, Color, TinkaTop} from './tinkatop.js'
+import * as Sensors from './tinkatop.js'
+
 /**  ***Class representing a Tinkacore. ***
 *Currently Supports: </br>
 *   Connection </br>
@@ -107,28 +108,28 @@ class TinkaCore {
     connect_sensor(sensor_id) {
         switch (sensor_id) {
         case 1:
-            this.sensor = new Button();
+            this.sensor = new Sensors.Button();
             break;
         case 2:
-            this.sensor = new Knob();
+            this.sensor = new Sensors.Knob();
             break;
         case 3:
-            this.sensor = new Slider();
+            this.sensor = new Sensors.Slider();
             break;
         case 4:
-            this.sensor = new Joystick();
+            this.sensor = new Sensors.Joystick();
             break;
         case 5:
-            this.sensor = new Motor();
+            this.sensor = new Sensors.Motor();
             break;
         case 23:
-            this.sensor = new Distance();
+            this.sensor = new Sensors.Distance();
             break;
         case 27:
-            this.sensor = new Color();
+            this.sensor = new Sensors.Color();
             break;
         default:
-            this.sensor = new TinkaTop();
+            this.sensor = new Sensors.TinkaTop();
             console.log('not yet implemented');
         }
         this.sensor_connected = true;
@@ -261,11 +262,6 @@ class TinkaCore {
         var motorMessage = new Uint8Array([90,171, 10,0,0,2,5,0,0,direction, intensityInt, intensityDecimal]);
         return motorMessage;
     }
-
-
-
 }
 
-export function mynamejeff() {
-    return {mynamejeff: 'mynamejeff'}
-}
+module.exports = TinkaCore;

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
-import mynamejeff  from './test.js';
+import * as connect from './connect.js'
+
 //Dictionary of tinkacore ids
 //Each instance added to dictionary will have
 //Specific characteristics
@@ -14,10 +15,9 @@ import mynamejeff  from './test.js';
 class App extends Component {
 
     render() {
-    var x = mynamejeff();
     return (
       <div className="App">
-          <h1> {x}</h1>
+          <h1> {x} </h1>
       </div>
     );
   }

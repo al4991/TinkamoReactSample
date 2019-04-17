@@ -1,4 +1,3 @@
-// TODO - Add Print Mode
 /** ***Class that represents a TinkaTop***
  */
 class TinkaTop {
@@ -345,6 +344,13 @@ function mapToRange(num, in_min, in_max, out_min, out_max) {
     return mappedVal;
 }
 
-
-
-export default Button;
+module.exports = {
+    TinkaTop,
+    Button,
+    Knob,
+    Slider,
+    Joystick,
+    Distance,
+    Color,
+    Motor
+}
