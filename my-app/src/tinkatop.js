@@ -344,7 +344,7 @@ function mapToRange(num, in_min, in_max, out_min, out_max) {
     return mappedVal;
 }
 
-module.exports = {
+export default {
     TinkaTop,
     Button,
     Knob,

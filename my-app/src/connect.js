@@ -1,4 +1,4 @@
-import TinkaCore from './tinkacore.js';
+import TinkaCore from './tinkacore';
 
 let tinkaServiceName = 0xfffa;
 const slider = document.getElementById('slider');
