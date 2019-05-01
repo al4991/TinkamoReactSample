@@ -250,7 +250,7 @@ class Color extends TinkaTop {
         let red = command[0];
         let green = command[1];
         let blue = command[2];
-        let brightness = command[3]; // Not used - unsure what it is
+        // let brightness = command[3]; // Not used - unsure what it is
 
         // Hardware bug (feature?) - If all zeros, ignore
         if (!(red + green + blue)) {
@@ -290,7 +290,7 @@ class Motor extends TinkaTop {
         let intensityInt = command[1];
         let intensityDecimal = command[2];
         let intensityFloat = create_float([intensityInt, intensityDecimal]);
-        if(intensityFloat != false)
+        if(intensityFloat !== false)
             return [direction, intensityFloat];
     }
     
@@ -316,7 +316,7 @@ class Motor extends TinkaTop {
  * @returns {number} The complete floating point number
  */
 function create_float(command) {
-    if (command.length != 2) {
+    if (command.length !== 2) {
         console.log('Create Float function called on incorrect sensor.');
         return false;
     }

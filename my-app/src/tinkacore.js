@@ -180,7 +180,6 @@ export default class TinkaCore {
             return false;
         }
 
-        let packet_length = packet[2];
         let sensor_id = packet[6];
         let command_id = packet[8];
         let command = packet.slice(9);
@@ -188,7 +187,7 @@ export default class TinkaCore {
         switch (sensor_id) {
             case 0: // Connect/Disconnect
                 let new_sensor_id = command[0];
-                if (new_sensor_id == 255) { this.disconnect_sensor(); }
+                if (new_sensor_id === 255) { this.disconnect_sensor(); }
                 else { self.connect_sensor(new_sensor_id); }
 
                 // Call User-created event listener
@@ -199,7 +198,7 @@ export default class TinkaCore {
                 break;
             default:
                 if (!this.sensor_connected) { this.connect_sensor(sensor_id); }
-                if (sensor_id != this.sensor.id) { this.connect_sensor(sensor_id); }
+                if (sensor_id !== this.sensor.id) { this.connect_sensor(sensor_id); }
 
                 else {
                     let reading = this.sensor.sense(command_id, command);
@@ -210,9 +209,10 @@ export default class TinkaCore {
                     if (this.anyReadingFunction.func) {
                         this.anyReadingFunction.func({sensor:this.getSensorName(), value:reading}, ...this.anyReadingFunction.args);
                     }
-                    if (this.readingFunction[this.getSensorName()].func) {
-                        this.readingFunction[this.getSensorName()].func(reading, ...this.readingFunction[this.getSensorName()].args);
-                    }
+                    console.log(this.readingFunction);
+                    // if (this.readingFunction[this.getSensorName()].func) {
+                    //     this.readingFunction[this.getSensorName()].func(reading, ...this.readingFunction[this.getSensorName()].args);
+                    // }
                 }
         }
     }
@@ -243,7 +243,7 @@ export default class TinkaCore {
         }
         else {
             throw "First argument for onSensorChange() must be a function.";
-            return false;
+            // return false;
         }
     }
 
@@ -255,7 +255,7 @@ export default class TinkaCore {
         }
         else {
             throw "First argument for onAnyReading() must be a function.";
-            return false;
+            // return false;
         }
     }
 
@@ -270,12 +270,12 @@ export default class TinkaCore {
             } catch (e) {
                 throw e;
                 throw "Incorrect sensor name provided. Must be 'button', 'knob', 'slider', 'joystick', 'distance', or 'color'";
-                return false;
+                // return false;
             }
         }
         else {
             throw "First argument for onReading() must be a function.";
-            return false;
+            // return false;
         }
     }
 
@@ -293,14 +293,14 @@ export default class TinkaCore {
 
         // We are a motor
         // Motor responds with whether the message succeeded or failed
-        if (packet.length == 10) {
+        if (packet.length === 10) {
             console.log('Motor!');
             found = true;
         }
 
         // We are a sensor
         // Core responds with a connect/disconnect message (almost)
-        else if (packet.length == 13) {
+        else if (packet.length === 13) {
             console.log('TinkaCore!');
             packet[6] = 0; // Swap the 5 with a 0
             found = true;

@@ -31,7 +31,7 @@ export default class Tinkamo {
             // within the event listener, we must explicitly bind it
             let bound_disconnect = (function(event) {
                 self._on_disconnected(event)
-            }).bind(self);
+            });
     	    device.addEventListener('gattserverdisconnected', bound_disconnect);
 
             newDeviceID = device.id;
@@ -93,7 +93,7 @@ export default class Tinkamo {
     getByName(name) {
         // We need to decide if names are guaranteed to be unique
         let tinkaList = Object.values(this.tinkacores);
-        let tinkaWithName = tinkaList.filter(t => t.name == name);
+        let tinkaWithName = tinkaList.filter(t => t.name === name);
         return tinkaWithName;
     }
 
@@ -105,7 +105,7 @@ export default class Tinkamo {
     getBySensor(sensorName) {
         // May want to change the word sensor to top or tinkaTop
         let tinkaList = Object.values(this.tinkacores);
-        let tinkaWithSensor = tinkaList.filter(t => t.sensor.name == sensorName);
+        let tinkaWithSensor = tinkaList.filter(t => t.sensor.name === sensorName);
         return tinkaWithSensor;
     }
 
