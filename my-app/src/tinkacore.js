@@ -1,89 +1,96 @@
-import Button from './tinkatop'
-import Knob from './tinkatop'
-import Slider from './tinkatop'
-import Joystick from './tinkatop'
-import Distance from './tinkatop'
-import Color from './tinkatop'
-import Motor from './tinkatop'
-import TinkaTop from './tinkatop'
-
-
+import {TinkaTop, Joystick, Slider, Knob, Button, Motor, Color, Distance} from './tinkatop.js'
 /**  ***Class representing a Tinkacore. ***
-*Currently Supports: </br>
-*   Connection </br>
-*       ID: 0  </br>
+*Currently Supports:
+*   Connection
+*       ID: 0
 *       Output: [0|1] string containing name of sensor attached <br>
 *   Button
 *       ID: 1
 *       Output: [0|1]
 *   Knob
 *       ID: 2
-*       Output: float ranging from -10 to 10 
-*   Slider 
+*       Output: float ranging from -10 to 10
+*   Slider
 *       ID: 3
-*       Output: float ranging from 0 to 10 
-*   Joystick 
+*       Output: float ranging from 0 to 10
+*   Joystick
 *       ID: 4
 *       Output: horizontal float, vertical float ranging from -10 to 10
-*   Distance 
+*   Distance
 *       ID: 23
-*       Output: float ranging from 0 to 20 
-*   Color 
+*       Output: float ranging from 0 to 20
+*   Color
 *       ID: 27
 *       Output: red int, green int, blue int ranging from 0 to 255
 */
-class TinkaCore {
+export default class TinkaCore {
 
     // Coming from the Static variable, this might also have a number
     // for when it was added to the array
 
     /**
-     * Creates an instance of the Tinkacore class 
-     * @param {number} id 
-     * @param {*} characteristics 
+     * Creates an instance of the Tinkacore class
+     * @param {number} id
+     * @param {*} characteristics
      */
     constructor(id, characteristics) {
-        // Instance Variables
-        this.characteristics = characteristics; // noble bluetooth component
-        this.id = id;
-        this.connected = true;
-        this.sensor_connected = false;
-        this.sensor = null;
 
-        // Static Variable
+        // Static Variables
         TinkaCore.core_ids = TinkaCore.core_ids || {
             connected: new Set([]),
             disconnected: new Set([])
+        }
+        TinkaCore.number_added = TinkaCore.number_added || 0;
+
+        // Instance Variables
+        // Bluetooth
+        this.characteristics = characteristics;
+
+        // Core
+        this.id = id;
+        this.name = 'tinka' + TinkaCore.number_added;
+        this.connected = true;
+        this.sensorChangeFunction = {func:null, args: null};
+
+        // Sensor
+        this.sensor_connected = false;
+        this.sensor = null;
+        this.reading = {};
+        this.anyReadingFunction = {func:null, args: null};
+        this.readingFunction = {
+            'button': {func:null, args: null},
+            'knob': {func:null, args: null},
+            'slider': {func:null, args: null},
+            'joystick': {func:null, args: null},
+            'distance': {func:null, args: null},
+            'color': {func:null, args: null}
         };
 
         TinkaCore.add_core(this.id);
     }
     /**
-     * DESCRIPTION HERE 
-     * @returns {boolean} 
+     * DESCRIPTION HERE
+     * @returns {boolean}
      */
     connect() {
         let self = this;
 
-        // https://stackoverflow.com/questions/33859113/
-        // javascript-removeeventlistener-not-working-inside-a-class
         self.who_am_i_handler = self.who_am_i.bind(self);
-
         self.characteristics[0].addEventListener('characteristicvaluechanged',
                                                  self.who_am_i_handler);
 
         self.characteristics[0].startNotifications().then(function(characteristic) {
 
-	    let motorMessage = TinkaCore.createMessage(0,0,0);
+        // Does it make sense to instantiate a new motor instance here?
+	    let motor = new Motor();
+	    let motorMessage = motor.createSpeedMotorMessage(0,3,0);
             self.characteristics[1].writeValue(motorMessage);
         });
-
-        // If 'self' is not bound here. Then the event itself becomes 'self'
 
         return true;
     }
     /**
-     * DESCRIPTION HERE 
+     * DESCRIPTION HERE
      * @returns {boolean}
      */
     disconnect() {
@@ -93,8 +100,8 @@ class TinkaCore {
     }
 
     /**
-     * DESCRIPTION HERE 
-     * @param {*} characteristics 
+     * DESCRIPTION HERE
+     * @param {*} characteristics
      * @returns {boolean}
      */
     reconnect(characteristics) {
@@ -103,14 +110,15 @@ class TinkaCore {
         console.log('Reconnecting');
         self.characteristics = characteristics;
         TinkaCore.add_core(this.id);
+        this.connected = true;
 
         self.connect();
         return true;
     }
 
     /**
-     * DESCRIPTION HERE 
-     * @param {*} sensor_id 
+     * DESCRIPTION HERE
+     * @param {*} sensor_id
      * @returns {*}
      */
     connect_sensor(sensor_id) {
@@ -146,8 +154,8 @@ class TinkaCore {
         return this.sensor;
     }
     /**
-     * DESCRIPTION HERE 
-     * @returns {boolean} 
+     * DESCRIPTION HERE
+     * @returns {boolean}
      */
     disconnect_sensor() {
         this.sensor_connected = false;
@@ -158,8 +166,8 @@ class TinkaCore {
     }
 
     /**
-     * DESCRIPTION HERE 
-     * @param {*} event 
+     * DESCRIPTION HERE
+     * @param {*} event
      * @returns {boolean}
      */
     parse_packet(event) {
@@ -182,6 +190,12 @@ class TinkaCore {
                 let new_sensor_id = command[0];
                 if (new_sensor_id == 255) { this.disconnect_sensor(); }
                 else { self.connect_sensor(new_sensor_id); }
+
+                // Call User-created event listener
+                if (this.sensorChangeFunction.func) {
+                    this.sensorChangeFunction.func({sensor:this.getSensorName(), connected:this.sensor_connected}, ...this.sensorChangeFunction.args);
+                }
+
                 break;
             default:
                 if (!this.sensor_connected) { this.connect_sensor(sensor_id); }
@@ -189,13 +203,87 @@ class TinkaCore {
 
                 else {
                     let reading = this.sensor.sense(command_id, command);
-                    console.log(this.sensor.name + ': ', reading);
+                    this.reading[this.sensor.name] = reading;
+                    console.log(this.name + ': ' + this.getSensorName() + ': ', reading);
+
+                    // Call User-created event listeners
+                    if (this.anyReadingFunction.func) {
+                        this.anyReadingFunction.func({sensor:this.getSensorName(), value:reading}, ...this.anyReadingFunction.args);
+                    }
+                    if (this.readingFunction[this.getSensorName()].func) {
+                        this.readingFunction[this.getSensorName()].func(reading, ...this.readingFunction[this.getSensorName()].args);
+                    }
                 }
         }
     }
+
+    getLastReading(sensor_name) {
+        if (this.reading[sensor_name]) {
+            return this.reading[sensor_name]
+        }
+        else { return false; }
+    }
+
+    getSensorName() {
+        if (this.sensor_connected) {
+            return this.sensor.name;
+        }
+        else {
+            return 'none';
+        }
+    }
+
+
+    // Support for Event listeners (at some point this could be refactored)
+    onSensorChange(func, ...args) {
+        if (typeof func === "function") {
+            this.sensorChangeFunction.func = func.bind(this);
+            this.sensorChangeFunction.args = args;
+            return true;
+        }
+        else {
+            throw "First argument for onSensorChange() must be a function.";
+            return false;
+        }
+    }
+
+    onAnyReading(func, ...args) {
+        if (typeof func === "function") {
+            this.anyReadingFunction.func = func.bind(this);
+            this.anyReadingFunction.args = args;
+            return true;
+        }
+        else {
+            throw "First argument for onAnyReading() must be a function.";
+            return false;
+        }
+    }
+
+    onReading(sensorName, func, ...args) {
+        if (typeof func === "function") {
+            try {
+                console.log(this.readingFunction);
+                this.readingFunction[sensorName].func = func.bind(this);
+                this.readingFunction[sensorName].args = args;
+                return true
+
+            } catch (e) {
+                throw e;
+                throw "Incorrect sensor name provided. Must be 'button', 'knob', 'slider', 'joystick', 'distance', or 'color'";
+                return false;
+            }
+        }
+        else {
+            throw "First argument for onReading() must be a function.";
+            return false;
+        }
+    }
+
     /**
-     * DESCRIPTION HERE 
-     * @param {*} event 
+     * Function that gets called right when a Tinkacore is first connected and
+     * begins subscribing to messages. Determines if it is a motor and what
+     * sensor if any is currently connected.
+     * @param {*} event
      * @returns {boolean}
      */
     who_am_i(event) {
@@ -222,6 +310,8 @@ class TinkaCore {
             self.parse_packet(event);
             self.characteristics[0].removeEventListener('characteristicvaluechanged',
                         self.who_am_i_handler);
+
+            // If 'self' is not bound here. Then the event itself becomes 'self'
             self.characteristics[0].addEventListener('characteristicvaluechanged',
                         self.parse_packet.bind(self));
         }
@@ -232,8 +322,8 @@ class TinkaCore {
     // Static Methods for keeping track globally of
     // what cores we have connected
     /**
-     * DESCRIPTION HERE 
-     * @param {*} peripheral_id 
+     * DESCRIPTION HERE
+     * @param {*} peripheral_id
      * @returns {*}
      */
     static add_core(peripheral_id) {
@@ -241,13 +331,16 @@ class TinkaCore {
         if (TinkaCore.core_ids.disconnected.has(peripheral_id)) {
             TinkaCore.core_ids.disconnected.delete(peripheral_id);
         }
+        else {
+            TinkaCore.number_added += 1;
+        }
         TinkaCore.core_ids.connected.add(peripheral_id);
         return peripheral_id;
     }
 
     /**
-     * DESCRIPTION HERE 
-     * @param {*} peripheral_id 
+     * DESCRIPTION HERE
+     * @param {*} peripheral_id
      * @returns {*}
      */
     static remove_core(peripheral_id) {
@@ -261,17 +354,14 @@ class TinkaCore {
     //only motor message for now
     /**
      * DESCRIPTION HERE
-     * @param {*} direction 
-     * @param {*} intensityInt 
-     * @param {*} intensityDecimal 
+     * @param {*} direction
+     * @param {*} intensityInt
+     * @param {*} intensityDecimal
      * @returns {*}
      */
     static createMessage(direction, intensityInt, intensityDecimal){
         var motorMessage = new Uint8Array([90,171, 10,0,0,2,5,0,0,direction, intensityInt, intensityDecimal]);
         return motorMessage;
     }
-}
 
-export default {
-    TinkaCore
 }
