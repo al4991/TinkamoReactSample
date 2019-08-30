@@ -44,7 +44,7 @@ class App extends Component {
           <div className="App">
               <a className="waves-effect waves-light btn-large red darken-1" id="connectionButton"
                  onClick={this.onConnectionCallback.bind(this)}><i className="material-icons left">bluetooth</i>Connect your Tinkamo!</a>
-              {this.parseCores()}
+              {JSON.stringify(this.state.tinkamo.tinkacores)}
           </div>
         );
     }
